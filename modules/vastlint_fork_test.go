@@ -50,12 +50,22 @@ func TestVastlintHookOnVideoStormFixture(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, result.Errors)
 	require.Empty(t, result.ChangeSet.Mutations())
+	require.Equal(t, 1.0, metricValue(t, metrics, "vastlint_bids_total", map[string]string{
+		"caller": "videostorm",
+		"result": "checked",
+	}))
 
-	for _, got := range findingLabels(t, metrics) {
-		t.Logf("finding caller=%s rule=%s revenue_impact=%s", got.caller, got.ruleID, got.revenue)
-		require.Equal(t, "videostorm", got.caller)
-		require.Equal(t, "true", got.revenue)
+	got := map[string]string{}
+	for _, label := range findingLabels(t, metrics) {
+		t.Logf("finding caller=%s rule=%s revenue_impact=%s", label.caller, label.ruleID, label.revenue)
+		require.Equal(t, "videostorm", label.caller)
+		got[label.ruleID] = label.revenue
 	}
+	require.Equal(t, map[string]string{
+		"VAST-2.0-url-cdata":                "false",
+		"SIMID-1.0-simid-interactive-start": "false",
+		"VAST-2.0-adsystem-no-version":      "false",
+	}, got)
 }
 
 func enableVastlint(t *testing.T, rejectRevenue bool) (hookstage.RawBidderResponse, *prometheusmetrics.Metrics) {
@@ -128,15 +138,30 @@ func findingLabels(t *testing.T, metrics *prometheusmetrics.Metrics) []findingLa
 
 func findingCount(t *testing.T, metrics *prometheusmetrics.Metrics, caller, ruleID string) float64 {
 	t.Helper()
+	return metricValue(t, metrics, "vastlint_findings_total", map[string]string{
+		"caller":         caller,
+		"rule_id":        ruleID,
+		"revenue_impact": "true",
+	})
+}
+
+func metricValue(t *testing.T, metrics *prometheusmetrics.Metrics, name string, labels map[string]string) float64 {
+	t.Helper()
 	families, err := metrics.Gatherer.Gather()
 	require.NoError(t, err)
 	for _, family := range families {
-		if family.GetName() != "vastlint_findings_total" {
+		if family.GetName() != name {
 			continue
 		}
 		for _, metric := range family.Metric {
-			labels := labelMap(metric)
-			if labels["caller"] == caller && labels["rule_id"] == ruleID {
+			got := labelMap(metric)
+			match := true
+			for key, value := range labels {
+				if got[key] != value {
+					match = false
+				}
+			}
+			if match {
 				return metric.GetCounter().GetValue()
 			}
 		}

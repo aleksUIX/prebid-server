@@ -1,0 +1,37 @@
+port: 8000
+admin_port: 6060
+external_url: localhost
+
+gdpr:
+  default_value: "0"
+
+hooks:
+  enabled: true
+  modules:
+    openadtech:
+      vastlint:
+        enabled: true
+        reject_revenue: false
+  host_execution_plan:
+    endpoints:
+      /openrtb2/auction:
+        stages:
+          raw_bidder_response:
+            groups:
+              - timeout: 5
+                hook_sequence:
+                  - module_code: openadtech.vastlint
+                    hook_impl_code: vastlint-raw-bidder-response
+      /openrtb2/video:
+        stages:
+          raw_bidder_response:
+            groups:
+              - timeout: 5
+                hook_sequence:
+                  - module_code: openadtech.vastlint
+                    hook_impl_code: vastlint-raw-bidder-response
+
+metrics:
+  prometheus:
+    port: 9090
+    timeout_ms: 10000
