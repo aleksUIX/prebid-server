@@ -68,6 +68,10 @@ github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuy
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk541a8SKzHPHnH3zbiI+7dagKZ0cgpgrD7Fyho=
+github.com/aleksUIX/vastlint-go v0.13.10 h1:eNo1ol3jWd78b8DIUXvnJ4HYmi1Xkry00iNS0SwR8Gc=
+github.com/aleksUIX/vastlint-go v0.13.10/go.mod h1:TF6r6mFvu5GmFgB4oczhhbV6S7tGJYGBsQQrFarlsLs=
+github.com/aleksUIX/vastlint-go/prebid v0.1.0 h1:YUXdQM1tt4Jelc+PbeH3asfZ+G6PudlgkPMFSt/xXtQ=
+github.com/aleksUIX/vastlint-go/prebid v0.1.0/go.mod h1:4nY2pDHLi+q6qj73nSEJKfL9nke/1Duh4VHNg4OtcHc=
 github.com/alitto/pond v1.8.3 h1:ydIqygCLVPqIX/USe5EaV/aSRXTRXDEI9JwuDdu+/xs=
 github.com/alitto/pond v1.8.3/go.mod h1:CmvIIGd5jKLasGI3D87qDkQxjzChdKMmnXMg3fG6M6Q=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=

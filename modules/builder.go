@@ -1,6 +1,7 @@
 package modules
 
 import (
+	vastlintpbs "github.com/aleksUIX/vastlint-go/prebid"
 	fiftyonedegreesDevicedetection "github.com/prebid/prebid-server/v4/modules/fiftyonedegrees/devicedetection"
 	prebidOrtb2blocking "github.com/prebid/prebid-server/v4/modules/prebid/ortb2blocking"
 	prebidRulesengine "github.com/prebid/prebid-server/v4/modules/prebid/rulesengine"
@@ -14,6 +15,9 @@ func builders() ModuleBuilders {
 	return ModuleBuilders{
 		"fiftyonedegrees": {
 			"devicedetection": fiftyonedegreesDevicedetection.Builder,
+		},
+		"openadtech": {
+			"vastlint": vastlintpbs.Builder,
 		},
 		"prebid": {
 			"ortb2blocking": prebidOrtb2blocking.Builder,

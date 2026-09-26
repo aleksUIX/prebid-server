@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	vastlintpbs "github.com/aleksUIX/vastlint-go/prebid"
 	"github.com/prebid/prebid-server/v4/config"
 	"github.com/prebid/prebid-server/v4/metrics"
 	"github.com/prebid/prebid-server/v4/openrtb_ext"
@@ -546,6 +547,9 @@ func NewMetrics(cfg config.PrometheusMetrics, disabledMetrics config.DisabledMet
 		[]string{successLabel})
 
 	createModulesMetrics(cfg, reg, &metrics, moduleStageNames, standardTimeBuckets)
+	if _, ok := moduleStageNames[vastlintpbs.MetricsKey]; ok {
+		vastlintpbs.Register(reg, cfg.Namespace, cfg.Subsystem)
+	}
 
 	metrics.Gatherer = reg
 
