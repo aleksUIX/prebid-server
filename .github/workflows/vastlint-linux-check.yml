@@ -1,0 +1,68 @@
+name: vastlint module Linux check
+
+# Runs on the fork only. Builds and tests modules/vastlint/validation on
+# Linux x86_64 under both engines: the embedded wasm engine (default build)
+# and the native library (-tags vastlint_cgo) installed from the vastlint
+# release. Also prints the module benchmarks for the Linux per-call figures.
+on:
+  push:
+    branches: ["ci/**"]
+  workflow_dispatch:
+
+jobs:
+  module:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.25.x", "1.26.x"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Build Prebid Server (default build, CGO_ENABLED=0)
+        run: CGO_ENABLED=0 go build -o /tmp/pbs-wasm .
+      - name: Module tests, wasm engine, race detector, coverage
+        run: |
+          go test -count=1 -race -coverprofile=/tmp/cover.out ./modules/vastlint/validation/...
+          go tool cover -func=/tmp/cover.out | tail -1
+      - name: Modules package (builder registration)
+        run: go test -count=1 ./modules/
+      - name: Install libvastlint 0.16.2 (release tarball)
+        run: |
+          set -e
+          mkdir -p /tmp/vastlint/lib/pkgconfig /tmp/vastlint/include /tmp/dl
+          curl -sSL -o /tmp/dl/ffi.tar.gz https://github.com/aleksUIX/vastlint/releases/download/v0.16.2/vastlint-ffi-linux-x86_64.tar.gz
+          tar xzf /tmp/dl/ffi.tar.gz -C /tmp/dl
+          cp /tmp/dl/libvastlint.a /tmp/vastlint/lib/ && cp /tmp/dl/vastlint.h /tmp/vastlint/include/
+          cat > /tmp/vastlint/lib/pkgconfig/vastlint.pc <<'PC'
+          prefix=/tmp/vastlint
+          libdir=${prefix}/lib
+          includedir=${prefix}/include
+
+          Name: vastlint
+          Description: VAST validation engine (vastlint-core via C ABI)
+          Version: 0.16.2
+          Cflags: -I${includedir}
+          Libs: -L${libdir} -lvastlint
+          Libs.private: -lm -ldl -lpthread
+          PC
+          PKG_CONFIG_PATH=/tmp/vastlint/lib/pkgconfig pkg-config --modversion vastlint
+      - name: Module tests, native engine
+        run: PKG_CONFIG_PATH=/tmp/vastlint/lib/pkgconfig go test -count=1 -race -tags vastlint_cgo ./modules/vastlint/validation/...
+      - name: Build Prebid Server with the native engine
+        run: PKG_CONFIG_PATH=/tmp/vastlint/lib/pkgconfig go build -tags vastlint_cgo -o /tmp/pbs-cgo .
+      - name: Benchmarks, wasm engine
+        run: go test -run XXX -bench . -benchmem -benchtime 2s ./modules/vastlint/validation/
+      - name: Benchmarks, native engine
+        run: PKG_CONFIG_PATH=/tmp/vastlint/lib/pkgconfig go test -run XXX -bench . -benchmem -benchtime 2s -tags vastlint_cgo ./modules/vastlint/validation/
+      - name: vastlint-go engine parity and benchmarks on Linux
+        run: |
+          set -e
+          git clone --quiet --depth 1 --branch v0.16.4 https://github.com/aleksUIX/vastlint-go /tmp/vastlint-go
+          cd /tmp/vastlint-go
+          go test -count=1 ./...
+          go test -run XXX -bench . -benchmem -benchtime 2s ./...
+          PKG_CONFIG_PATH=/tmp/vastlint/lib/pkgconfig go test -count=1 -tags vastlint_cgo ./...
+          PKG_CONFIG_PATH=/tmp/vastlint/lib/pkgconfig go test -run XXX -bench . -benchmem -benchtime 2s -tags vastlint_cgo ./...
